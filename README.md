@@ -5,7 +5,7 @@ A set of shell utilities for converting and processing audio files, tailored for
 ***
 
 ```
-© 2017-2020 Andrey A. Ugolnik. All Rights Reserved.
+© 2017-2025 Andrey A. Ugolnik. All Rights Reserved.
 https://www.ugolnik.info
 andrey@ugolnik.info
 ```
