@@ -6,7 +6,7 @@
 # https://www.ugolnik.info
 # andrey@ugolnik.info
 #
-# Modified: May 17, 2025
+# Modified: May 21, 2025
 #
 
 TARGET_SAMPLE_RATE=44100
@@ -16,15 +16,6 @@ TARGET_CHANNELS=1
 convert() {
     INPUT_FILE="$1"
     OUTPUT_FILE="$2"
-
-    #     ffprobe_output=$(ffprobe -v error -select_streams a:0 \
-    #         -show_entries stream=codec_name,channels,sample_rate \
-    #         -of default=noprint_wrappers=1:nokey=1 "$INPUT_FILE")
-    #
-    #     set -- "$ffprobe_output"
-    #     CODEC=$1
-    #     CHANNELS=$2
-    #     SAMPLE_RATE=$3
 
     ffprobe_output=$(ffprobe -v error -select_streams a:0 \
         -show_entries stream=codec_name,channels,sample_rate \
@@ -41,7 +32,7 @@ convert() {
         echo "  Channels: $CHANNELS"
         echo "  Sample rate: $SAMPLE_RATE"
         echo "  Converting to the required format..."
-        ffmpeg -y -i "$INPUT_FILE" -ac $TARGET_CHANNELS -ar $TARGET_SAMPLE_RATE -sample_fmt s16 "$OUTPUT_FILE"
+        ffmpeg -y -i "${INPUT_FILE}" -ac $TARGET_CHANNELS -ar $TARGET_SAMPLE_RATE -sample_fmt s16 "${OUTPUT_FILE}"
         mv -f "${OUTPUT_FILE}" "${INPUT_FILE}"
         echo "  Done."
     else
@@ -53,10 +44,7 @@ convert() {
 
 for i in *.wav; do
     INPUT_FILE="${i}"
-    OUTPUT_FILE="~${INPUT_FILE%.*}.wav"
-
-    # ffmpeg -i "${INPUT_FILE}" -acodec pcm_s16le -ar 44100 -ac 1 "${OUTPUT_FILE}"
-    # mv -f "${OUTPUT_FILE}" "${INPUT_FILE}"
+    OUTPUT_FILE="${INPUT_FILE%.*}~.wav"
 
     convert "$INPUT_FILE" "$OUTPUT_FILE"
 done
