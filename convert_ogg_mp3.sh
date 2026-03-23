@@ -1,16 +1,79 @@
 #!/bin/sh
 #
 # Andrey A. Ugolnik
-# http://www.ugolnik.info
+# https://www.ugolnik.info
 # andrey@ugolnik.info
 #
-# convert all OGG files in the current directory to MP3.
+# Convert OGG files to MP3.
 
-for i in *.ogg; do
-    path="${i}"
-    name="${path%.*}.mp3"
+usage() {
+    echo "Usage: $(basename "$0") [--remove-source] <file.ogg|directory>"
+    echo ""
+    echo "  file.ogg         Convert a single OGG file to MP3."
+    echo "  directory         Convert all OGG files in the directory."
+    echo "  --remove-source   Remove source OGG file(s) after conversion."
+}
 
-    rm -f "${name}"
-    ffmpeg -i "${path}" -acodec mp3 "${name}"
+if [ $# -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "Error: ffmpeg is not installed."
+    echo "Install it with: brew install ffmpeg"
+    exit 1
+fi
+
+REMOVE_SOURCE=0
+TARGET=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --remove-source)
+            REMOVE_SOURCE=1
+            ;;
+        *)
+            TARGET="$arg"
+            ;;
+    esac
 done
+
+if [ -z "$TARGET" ]; then
+    echo "Error: no file or directory specified."
+    usage
+    exit 1
+fi
+
+convert() {
+    INPUT_FILE="$1"
+    OUTPUT_FILE="${INPUT_FILE%.*}.mp3"
+
+    echo "Input: $INPUT_FILE"
+
+    rm -f "${OUTPUT_FILE}"
+    ffmpeg -i "${INPUT_FILE}" -acodec mp3 "${OUTPUT_FILE}"
+
+    if [ $REMOVE_SOURCE -eq 1 ]; then
+        rm "${INPUT_FILE}"
+        echo "  Removed source file."
+    fi
+
+    echo ""
+}
+
+if [ -f "$TARGET" ]; then
+    case "$TARGET" in
+        *.ogg) convert "$TARGET" ;;
+        *) echo "Error: '$TARGET' is not an OGG file."; exit 1 ;;
+    esac
+elif [ -d "$TARGET" ]; then
+    for i in "$TARGET"/*.ogg; do
+        [ -f "$i" ] || continue
+        convert "$i"
+    done
+else
+    echo "Error: '$TARGET' is not a valid file or directory."
+    exit 1
+fi
 

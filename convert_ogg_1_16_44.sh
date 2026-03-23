@@ -4,17 +4,34 @@
 # https://www.ugolnik.info
 # andrey@ugolnik.info
 #
-# Convert all OGG files to 44.1kHz / 16-bit / mono.
-#
-# Modified: May 21, 2025
-#
+# Convert OGG files to 44.1kHz / 16-bit / mono (in-place).
+
+usage() {
+    echo "Usage: $(basename "$0") <file.ogg|directory>"
+    echo ""
+    echo "  file.ogg    Convert a single OGG file to 44.1kHz/16-bit/mono."
+    echo "  directory   Convert all OGG files in the directory."
+}
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "Error: ffmpeg is not installed."
+    echo "Install it with: brew install ffmpeg"
+    exit 1
+fi
+
+TARGET="$1"
 
 TARGET_SAMPLE_RATE=44100
 TARGET_CHANNELS=1
 
 convert() {
     INPUT_FILE="$1"
-    OUTPUT_FILE="$2"
+    OUTPUT_FILE="${INPUT_FILE%.*}~.ogg"
 
     ffprobe_output=$(ffprobe -v error -select_streams a:0 \
         -show_entries stream=codec_name,channels,sample_rate \
@@ -41,9 +58,17 @@ convert() {
     echo ""
 }
 
-for i in *.ogg; do
-    INPUT_FILE="${i}"
-    OUTPUT_FILE="${INPUT_FILE%.*}~.ogg"
-
-    convert "$INPUT_FILE" "$OUTPUT_FILE"
-done
+if [ -f "$TARGET" ]; then
+    case "$TARGET" in
+        *.ogg) convert "$TARGET" ;;
+        *) echo "Error: '$TARGET' is not an OGG file."; exit 1 ;;
+    esac
+elif [ -d "$TARGET" ]; then
+    for i in "$TARGET"/*.ogg; do
+        [ -f "$i" ] || continue
+        convert "$i"
+    done
+else
+    echo "Error: '$TARGET' is not a valid file or directory."
+    exit 1
+fi
